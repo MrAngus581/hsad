@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>螢幕保護程式</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="screensaver"></canvas>
+
+    <script>
+        const canvas = document.getElementById('screensaver');
+        const ctx = canvas.getContext('2d');
+        let circles = [];
+        const numCircles = 20;
+
+        // 設定畫布大小
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 隨機顏色生成器
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // 隨機圓圈生成器
+        function generateCircles() {
+            circles = [];
+            for (let i = 0; i < numCircles; i++) {
+                circles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 50 + 10,
+                    dx: (Math.random() - 0.5) * 4,
+                    dy: (Math.random() - 0.5) * 4,
+                    color: getRandomColor()
+                });
+            }
+        }
+
+        // 更新圓圈位置和顏色
+        function updateCircles() {
+            circles.forEach(circle => {
+                circle.x += circle.dx;
+                circle.y += circle.dy;
+
+                if (circle.x + circle.radius > canvas.width || circle.x - circle.radius < 0) {
+                    circle.dx = -circle.dx;
+                }
+                if (circle.y + circle.radius > canvas.height || circle.y - circle.radius < 0) {
+                    circle.dy = -circle.dy;
+                }
+
+                // 確保圓圈不會跑到畫布外面
+                circle.x = Math.max(circle.radius, Math.min(canvas.width - circle.radius, circle.x));
+                circle.y = Math.max(circle.radius, Math.min(canvas.height - circle.radius, circle.y));
+            });
+        }
+
+        // 繪製圓圈
+        function drawCircles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            circles.forEach(circle => {
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = circle.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        // 主循環
+        function animate() {
+            updateCircles();
+            drawCircles();
+            requestAnimationFrame(animate);
+        }
+
+        // 初始化
+        generateCircles();
+        animate();
+
+        // 確保畫布尺寸隨視窗調整
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            generateCircles();
+        });
+
+        // 偵測滑鼠移動，恢復到正常模式
+        window.addEventListener('mousemove', () => {
+            document.body.innerHTML = '<h1>螢幕保護程式已被關閉</h1>';
+        });
+    </script>
+</body>
+</html>
