@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双人对战游戏</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; background: #eee; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const player1 = {
+            x: 50,
+            y: canvas.height / 2,
+            width: 50,
+            height: 50,
+            color: 'blue',
+            speed: 5,
+            keys: { up: 'w', down: 's', left: 'a', right: 'd', attack: ' ', skill: 'q' },
+            isAttacking: false,
+            isUsingSkill: false,
+            keyState: { up: false, down: false, left: false, right: false },
+            attackRange: 60,
+            skillRange: 100,
+            skillCooldown: 3000, // 技能冷却时间（毫秒）
+            lastSkillUse: 0
+        };
+
+        const player2 = {
+            x: canvas.width - 100,
+            y: canvas.height / 2,
+            width: 50,
+            height: 50,
+            color: 'red',
+            speed: 5,
+            keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', attack: 'Enter', skill: 'Shift' },
+            isAttacking: false,
+            isUsingSkill: false,
+            keyState: { up: false, down: false, left: false, right: false },
+            attackRange: 60,
+            skillRange: 100,
+            skillCooldown: 3000, // 技能冷却时间（毫秒）
+            lastSkillUse: 0
+        };
+
+        function drawPlayer(player) {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // 绘制攻击范围
+            if (player.isAttacking) {
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.attackRange, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+
+            // 绘制技能范围
+            if (player.isUsingSkill) {
+                ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.skillRange, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            movePlayer(player1);
+            movePlayer(player2);
+            drawPlayer(player1);
+            drawPlayer(player2);
+            checkCollision();
+            requestAnimationFrame(update);
+        }
+
+        function movePlayer(player) {
+            if (player.keyState.up) player.y -= player.speed;
+            if (player.keyState.down) player.y += player.speed;
+            if (player.keyState.left) player.x -= player.speed;
+            if (player.keyState.right) player.x += player.speed;
+        }
+
+        function checkCollision() {
+            const now = Date.now();
+            // 检查玩家1攻击范围是否碰到玩家2
+            if (player1.isAttacking && 
+                Math.sqrt((player1.x - player2.x) ** 2 + (player1.y - player2.y) ** 2) < player1.attackRange + player2.width / 2) {
+                alert('Player 1 Wins!');
+                resetGame();
+            }
+            // 检查玩家2攻击范围是否碰到玩家1
+            else if (player2.isAttacking && 
+                     Math.sqrt((player2.x - player1.x) ** 2 + (player2.y - player1.y) ** 2) < player2.attackRange + player1.width / 2) {
+                alert('Player 2 Wins!');
+                resetGame();
+            }
+            // 检查玩家1技能范围是否碰到玩家2
+            else if (player1.isUsingSkill && now - player1.lastSkillUse > player1.skillCooldown &&
+                     Math.sqrt((player1.x - player2.x) ** 2 + (player1.y - player2.y) ** 2) < player1.skillRange + player2.width / 2) {
+                alert('Player 1 Used Skill and Wins!');
+                resetGame();
+            }
+            // 检查玩家2技能范围是否碰到玩家1
+            else if (player2.isUsingSkill && now - player2.lastSkillUse > player2.skillCooldown &&
+                     Math.sqrt((player2.x - player1.x) ** 2 + (player2.y - player1.y) ** 2) < player2.skillRange + player1.width / 2) {
+                alert('Player 2 Used Skill and Wins!');
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            player1.x = 50;
+            player1.y = canvas.height / 2;
+            player2.x = canvas.width - 100;
+            player2.y = canvas.height / 2;
+            player1.isAttacking = false;
+            player2.isAttacking = false;
+            player1.isUsingSkill = false;
+            player2.isUsingSkill = false;
+            player1.lastSkillUse = Date.now();
+            player2.lastSkillUse = Date.now();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === player1.keys.up) player1.keyState.up = true;
+            if (e.key === player1.keys.down) player1.keyState.down = true;
+            if (e.key === player1.keys.left) player1.keyState.left = true;
+            if (e.key === player1.keys.right) player1.keyState.right = true;
+            if (e.key === player1.keys.attack) player1.isAttacking = true;
+            if (e.key === player1.keys.skill && Date.now() - player1.lastSkillUse > player1.skillCooldown) {
+                player1.isUsingSkill = true;
+                player1.lastSkillUse = Date.now();
+            }
+
+            if (e.key === player2.keys.up) player2.keyState.up = true;
+            if (e.key === player2.keys.down) player2.keyState.down = true;
+            if (e.key === player2.keys.left) player2.keyState.left = true;
+            if (e.key === player2.keys.right) player2.keyState.right = true;
+            if (e.key === player2.keys.attack) player2.isAttacking = true;
+            if (e.key === player2.keys.skill && Date.now() - player2.lastSkillUse > player2.skillCooldown) {
+                player2.isUsingSkill = true;
+                player2.lastSkillUse = Date.now();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === player1.keys.up) player1.keyState.up = false;
+            if (e.key === player1.keys.down) player1.keyState.down = false;
+            if (e.key === player1.keys.left) player1.keyState.left = false;
+            if (e.key === player1.keys.right) player1.keyState.right = false;
+            if (e.key === player1.keys.attack) player1.isAttacking = false;
+            if (e.key === player1.keys.skill) player1.isUsingSkill = false;
+
+            if (e.key === player2.keys.up) player2.keyState.up = false;
+            if (e.key === player2.keys.down) player2.keyState.down = false;
+            if (e.key === player2.keys.left) player2.keyState.left = false;
+            if (e.key === player2.keys.right) player2.keyState.right = false;
+            if (e.key === player2.keys.attack) player2.isAttacking = false;
+            if (e.key === player2.keys.skill) player2.isUsingSkill = false;
+        });
+
+        update();
+    </script>
+</body>
+</html>
