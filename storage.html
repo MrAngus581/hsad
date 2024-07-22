@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Database with Images and Descriptions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 10px; text-align: left; }
+        button { padding: 10px 20px; cursor: pointer; }
+        img { max-width: 100px; max-height: 100px; }
+    </style>
+</head>
+<body>
+    <h1>Simple Database with Images and Descriptions</h1>
+    <form id="dataForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required>
+        <label for="age">Age:</label>
+        <input type="number" id="age" required>
+        <label for="image">Image:</label>
+        <input type="file" id="image" accept="image/*" required>
+        <label for="description">Description:</label>
+        <textarea id="description" rows="4" cols="50" required></textarea>
+        <button type="submit">Add Entry</button>
+    </form>
+    <h2>Entries</h2>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Image</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('dataForm');
+            const nameInput = document.getElementById('name');
+            const ageInput = document.getElementById('age');
+            const imageInput = document.getElementById('image');
+            const descriptionInput = document.getElementById('description');
+            const dataTableBody = document.querySelector('#dataTable tbody');
+
+            function loadEntries() {
+                const entries = JSON.parse(localStorage.getItem('entries')) || [];
+                dataTableBody.innerHTML = '';
+                entries.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${entry.name}</td>
+                        <td>${entry.age}</td>
+                        <td><img src="${entry.image}" alt="Image"></td>
+                        <td>${entry.description}</td>
+                        <td><button onclick="deleteEntry(${index})">Delete</button></td>
+                    `;
+                    dataTableBody.appendChild(row);
+                });
+            }
+
+            function saveEntry(name, age, image, description) {
+                const entries = JSON.parse(localStorage.getItem('entries')) || [];
+                entries.push({ name, age, image, description });
+                localStorage.setItem('entries', JSON.stringify(entries));
+                loadEntries();
+            }
+
+            window.deleteEntry = (index) => {
+                const entries = JSON.parse(localStorage.getItem('entries')) || [];
+                entries.splice(index, 1);
+                localStorage.setItem('entries', JSON.stringify(entries));
+                loadEntries();
+            };
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                
+                const name = nameInput.value;
+                const age = ageInput.value;
+                const imageFile = imageInput.files[0];
+                const description = descriptionInput.value;
+                
+                if (imageFile) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageUrl = e.target.result;
+                        saveEntry(name, age, imageUrl, description);
+                        nameInput.value = '';
+                        ageInput.value = '';
+                        imageInput.value = '';
+                        descriptionInput.value = '';
+                    };
+                    reader.readAsDataURL(imageFile);
+                }
+            });
+
+            loadEntries();
+        });
+    </script>
+</body>
+</html>
