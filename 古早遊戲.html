@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Arcade Game</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; background: #000; }
+        #score { color: white; font-size: 24px; position: absolute; top: 10px; left: 10px; }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 遊戲變數
+        const player = {
+            x: canvas.width / 2 - 30,
+            y: canvas.height - 50,
+            width: 60,
+            height: 10,
+            speed: 5,
+            color: 'white'
+        };
+
+        let bullets = [];
+        let targets = [];
+        const targetSize = 30;
+        const targetSpeed = 2;
+        const bulletSpeed = 7;
+        const bulletWidth = 5;
+        const bulletHeight = 10;
+        let score = 0;
+
+        function createTarget() {
+            const x = Math.random() * (canvas.width - targetSize);
+            targets.push({ x, y: -targetSize, width: targetSize, height: targetSize, color: 'red' });
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = 'yellow';
+            for (const bullet of bullets) {
+                ctx.fillRect(bullet.x, bullet.y, bulletWidth, bulletHeight);
+            }
+        }
+
+        function drawTargets() {
+            for (const target of targets) {
+                ctx.fillStyle = target.color;
+                ctx.fillRect(target.x, target.y, target.width, target.height);
+            }
+        }
+
+        function updateBullets() {
+            bullets = bullets.filter(bullet => {
+                bullet.y -= bulletSpeed;
+                return bullet.y + bulletHeight > 0;
+            });
+        }
+
+        function updateTargets() {
+            targets = targets.filter(target => {
+                target.y += targetSpeed;
+                return target.y < canvas.height;
+            });
+        }
+
+        function checkCollisions() {
+            for (const bullet of bullets) {
+                for (const target of targets) {
+                    if (bullet.x < target.x + target.width &&
+                        bullet.x + bulletWidth > target.x &&
+                        bullet.y < target.y + target.height &&
+                        bullet.y + bulletHeight > target.y) {
+                        targets.splice(targets.indexOf(target), 1);
+                        bullets.splice(bullets.indexOf(bullet), 1);
+                        score += 10;
+                        document.getElementById('score').innerText = `Score: ${score}`;
+                        break;
+                    }
+                }
+            }
+        }
+
+        function update() {
+            updateBullets();
+            updateTargets();
+            checkCollisions();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer();
+            drawBullets();
+            drawTargets();
+        }
+
+        function gameLoop() {
+            handleMovement();
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleMovement() {
+            if (keys['a'] || keys['ArrowLeft']) {
+                player.x = Math.max(0, player.x - player.speed);
+            }
+            if (keys['d'] || keys['ArrowRight']) {
+                player.x = Math.min(canvas.width - player.width, player.x + player.speed);
+            }
+            if (keys[' '] && !keyStates[' '] && !cooldown) {
+                bullets.push({ x: player.x + player.width / 2 - bulletWidth / 2, y: player.y - bulletHeight });
+                keyStates[' '] = true; // 防止連發
+                cooldown = true; // 開啟冷卻時間
+                setTimeout(() => cooldown = false, 200); // 200ms冷卻時間
+            }
+        }
+
+        const keys = {};
+        const keyStates = {};
+        let cooldown = false;
+
+        document.addEventListener('keydown', (event) => {
+            keys[event.key] = true;
+        });
+
+        document.addEventListener('keyup', (event) => {
+            keys[event.key] = false;
+            keyStates[event.key] = false;
+        });
+
+        setInterval(createTarget, 2000);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = Math.min(player.x, canvas.width - player.width);
+            player.y = Math.min(player.y, canvas.height - player.height);
+        });
+
+        gameLoop();
+    </script>
+</body>
+</html>
