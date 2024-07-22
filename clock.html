@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock, Date, and Stopwatch</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0c29;  /* fallback for old browsers */
+            background: -webkit-linear-gradient(to right, #24243e, #302b63, #0f0c29);  /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            color: #61dafb;
+        }
+        .clock, .date, .stopwatch {
+            font-size: 48px;
+            margin: 10px;
+            text-shadow: 0 0 10px rgba(97, 218, 251, 0.7);
+            animation: glow 1s infinite alternate;
+        }
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(97, 218, 251, 0.7);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(97, 218, 251, 1);
+            }
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #61dafb;
+            color: #20232a;
+        }
+        button:hover {
+            background-color: #21a1f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="date" id="date"></div>
+    <div class="clock" id="clock"></div>
+    <div class="stopwatch" id="stopwatch">00:00:00</div>
+    <div>
+        <button onclick="startStopwatch()">Start</button>
+        <button onclick="stopStopwatch()">Stop</button>
+        <button onclick="resetStopwatch()">Reset</button>
+    </div>
+
+    <script>
+        function padZero(num) {
+            return String(num).padStart(2, '0');
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = padZero(now.getHours());
+            const minutes = padZero(now.getMinutes());
+            const seconds = padZero(now.getSeconds());
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function updateDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = padZero(now.getMonth() + 1); // Months are zero-based
+            const day = padZero(now.getDate());
+            document.getElementById('date').textContent = `${year}-${month}-${day}`;
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+        updateDate(); // Call once to set the date initially
+
+        let stopwatchInterval;
+        let stopwatchTime = 0;
+
+        function updateStopwatch() {
+            const hours = Math.floor(stopwatchTime / 3600);
+            const minutes = Math.floor((stopwatchTime % 3600) / 60);
+            const seconds = stopwatchTime % 60;
+            document.getElementById('stopwatch').textContent = `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`;
+        }
+
+        function startStopwatch() {
+            if (!stopwatchInterval) {
+                stopwatchInterval = setInterval(() => {
+                    stopwatchTime++;
+                    updateStopwatch();
+                }, 1000);
+            }
+        }
+
+        function stopStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+        }
+
+        function resetStopwatch() {
+            stopStopwatch();
+            stopwatchTime = 0;
+            updateStopwatch();
+        }
+    </script>
+</body>
+</html>
